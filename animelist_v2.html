@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AniTrack — Your Anime Universe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131c;
+    --surface2: #1c1c2e;
+    --surface3: #242436;
+    --accent: #e8402a;
+    --accent2: #ff6b35;
+    --gold: #f5c842;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --border: #2a2a3e;
+    --watching: #3b9eff;
+    --completed: #4caf50;
+    --plan: #9c6fde;
+    --dropped: #e84040;
+    --onhold: #f5a623;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,0.92); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem; display: flex; align-items: center; gap: 2rem; height: 60px;
+  }
+  .logo { font-family: 'Bebas Neue', cursive; font-size: 1.8rem; letter-spacing: 3px; color: var(--accent); text-shadow: 0 0 20px rgba(232,64,42,0.4); flex-shrink: 0; cursor: default; user-select: none; }
+  .logo span { color: var(--text); }
+  .nav-links { display: flex; gap: 0.25rem; list-style: none; flex: 1; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 500; letter-spacing: 0.5px; padding: 0.4rem 0.9rem; border-radius: 6px; transition: all 0.2s; text-transform: uppercase; }
+  .nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--surface2); }
+  .nav-links a.active { color: var(--accent); }
+  .nav-right { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; }
+  .search-bar {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.45rem 1rem 0.45rem 2.2rem; color: var(--text); font-family: inherit;
+    font-size: 0.82rem; width: 200px; outline: none; transition: all 0.25s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b6b8a' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 0.6rem center;
+  }
+  .search-bar:focus { border-color: var(--accent); width: 260px; box-shadow: 0 0 0 3px rgba(232,64,42,0.12); }
+  .nav-icon-btn {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+    width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.15s; flex-shrink: 0;
+  }
+  .nav-icon-btn:hover { color: var(--text); border-color: var(--muted); }
+  .btn-add {
+    background: var(--accent); color: white; border: none; border-radius: 8px;
+    padding: 0.45rem 1.1rem; font-family: inherit; font-size: 0.82rem; font-weight: 700;
+    letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 0.4rem; text-transform: uppercase; white-space: nowrap;
+  }
+  .btn-add:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(232,64,42,0.35); }
+
+  /* HERO */
+  .hero { position: relative; height: 260px; overflow: hidden; display: flex; align-items: flex-end; padding: 2.5rem; }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(232,64,42,0.15) 0%, transparent 50%),
+      linear-gradient(to top, var(--bg) 0%, transparent 60%),
+      repeating-linear-gradient(-45deg, transparent, transparent 30px, rgba(232,64,42,0.025) 30px, rgba(232,64,42,0.025) 31px);
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 60px 60px; opacity: 0.3;
+    mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
+  }
+  .hero-orb { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.15; animation: orbFloat 8s ease-in-out infinite; }
+  .hero-orb-1 { width: 300px; height: 300px; background: var(--accent); right: 10%; top: -50%; animation-delay: 0s; }
+  .hero-orb-2 { width: 200px; height: 200px; background: var(--plan); right: 30%; top: -20%; animation-delay: 3s; }
+  .hero-orb-3 { width: 150px; height: 150px; background: var(--watching); right: 50%; top: 0%; animation-delay: 6s; }
+  @keyframes orbFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(20px); } }
+  .hero-content { position: relative; z-index: 1; }
+  .hero-content h1 { font-family: 'Bebas Neue', cursive; font-size: 3.8rem; letter-spacing: 4px; line-height: 1; color: var(--text); }
+  .hero-content h1 em { font-style: normal; color: var(--accent); text-shadow: 0 0 30px rgba(232,64,42,0.5); }
+  .hero-content p { color: var(--muted); margin-top: 0.5rem; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* STATS BAR */
+  .stats-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.8rem 2.5rem; display: flex; gap: 2rem; align-items: center; overflow-x: auto; }
+  .stat-item { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+  .stat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-count { font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700; color: var(--text); }
+  .stat-divider { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+  .stats-progress-track { flex: 1; min-width: 100px; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; display: flex; }
+  .stats-progress-seg { height: 100%; transition: width 0.5s ease; }
+
+  /* MAIN */
+  .main-layout { display: grid; grid-template-columns: 240px 1fr; gap: 0; min-height: calc(100vh - 60px - 260px - 52px); }
+
+  /* SIDEBAR */
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 0; position: sticky; top: 60px; height: fit-content; }
+  .sidebar-section { margin-bottom: 1.5rem; }
+  .sidebar-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); padding: 0 1.5rem 0.6rem; }
+  .filter-btn { display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 1.5rem; cursor: pointer; transition: all 0.15s; border: none; background: none; color: var(--muted); font-family: inherit; font-size: 0.85rem; width: 100%; text-align: left; position: relative; }
+  .filter-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .filter-btn.active { color: var(--text); background: rgba(232,64,42,0.08); }
+  .filter-btn.active::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+  .filter-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .filter-count { margin-left: auto; font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); background: var(--surface2); padding: 1px 7px; border-radius: 10px; min-width: 24px; text-align: center; }
+  .filter-btn.active .filter-count { background: rgba(232,64,42,0.2); color: var(--accent); }
+
+  /* CONTENT */
+  .content { padding: 2rem 2.5rem; }
+  .content-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .content-title { font-family: 'Bebas Neue', cursive; font-size: 1.5rem; letter-spacing: 2px; color: var(--text); }
+  .view-toggle { margin-left: auto; display: flex; background: var(--surface2); border-radius: 8px; padding: 3px; gap: 2px; }
+  .view-btn { background: none; border: none; color: var(--muted); padding: 0.35rem 0.6rem; border-radius: 6px; cursor: pointer; transition: all 0.15s; font-size: 0.9rem; }
+  .view-btn.active { background: var(--surface); color: var(--text); }
+  .sort-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.78rem; padding: 0.35rem 0.7rem; outline: none; cursor: pointer; }
+
+  /* TABLE */
+  .anime-table { width: 100%; border-collapse: collapse; }
+  .anime-table th { text-align: left; padding: 0.6rem 1rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; font-family: 'Space Mono', monospace; }
+  .anime-table th:first-child { padding-left: 0; }
+  .anime-table th.sortable { cursor: pointer; user-select: none; transition: color 0.15s; }
+  .anime-table th.sortable:hover { color: var(--text); }
+  .anime-table th.sort-active { color: var(--accent); }
+  .anime-row { border-bottom: 1px solid rgba(42,42,62,0.6); transition: background 0.15s; animation: rowIn 0.35s ease both; }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .anime-row:hover { background: rgba(255,255,255,0.025); }
+  .anime-row td { padding: 0.75rem 1rem; vertical-align: middle; }
+  .anime-row td:first-child { padding-left: 0; }
+  .anime-thumb { width: 44px; height: 62px; border-radius: 6px; flex-shrink: 0; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; overflow: hidden; transition: transform 0.2s; }
+  .anime-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .anime-row:hover .anime-thumb { transform: scale(1.05); }
+  .thumb-cell { display: flex; align-items: center; gap: 1rem; }
+  .anime-info .title { font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 3px; cursor: pointer; transition: color 0.15s; }
+  .anime-info .title:hover { color: var(--accent); }
+  .anime-info .notes-preview { font-size: 0.7rem; color: var(--muted); margin-bottom: 3px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-style: italic; }
+  .anime-info .meta { font-size: 0.72rem; color: var(--muted); display: flex; gap: 0.5rem; align-items: center; }
+  .meta-tag { background: var(--surface2); padding: 1px 7px; border-radius: 4px; font-size: 0.68rem; color: var(--muted); }
+  .progress-cell { min-width: 130px; }
+  .progress-bar { height: 5px; background: var(--surface2); border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .progress-text { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+  .status-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+  .status-watching { background: rgba(59,158,255,0.15); color: var(--watching); }
+  .status-completed { background: rgba(76,175,80,0.15); color: var(--completed); }
+  .status-plan { background: rgba(156,111,222,0.15); color: var(--plan); }
+  .status-dropped { background: rgba(232,64,64,0.15); color: var(--dropped); }
+  .status-onhold { background: rgba(245,166,35,0.15); color: var(--onhold); }
+  .score-cell { font-family: 'Bebas Neue', cursive; font-size: 1.35rem; letter-spacing: 1px; }
+  .score-10 { color: var(--gold); text-shadow: 0 0 10px rgba(245,200,66,0.5); }
+  .score-high { color: var(--completed); }
+  .score-mid { color: var(--watching); }
+  .score-low { color: var(--muted); }
+  .score-none { color: var(--border); font-size: 1rem; }
+  .action-btns { display: flex; gap: 0.4rem; opacity: 0; transition: opacity 0.15s; }
+  .anime-row:hover .action-btns { opacity: 1; }
+  .action-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); width: 30px; height: 30px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; font-size: 0.75rem; font-family: 'Space Mono', monospace; font-weight: 700; }
+  .action-btn:hover { color: var(--text); border-color: var(--muted); }
+  .action-btn.del:hover { color: var(--dropped); border-color: var(--dropped); background: rgba(232,64,64,0.08); }
+  .action-btn.edit:hover { color: var(--accent); border-color: var(--accent); background: rgba(232,64,42,0.08); }
+  .action-btn.ep-plus:hover { color: var(--watching); border-color: var(--watching); background: rgba(59,158,255,0.08); }
+
+  /* GRID */
+  .anime-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 1.25rem; }
+  .grid-card { background: var(--surface); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; transition: all 0.25s; animation: rowIn 0.35s ease both; position: relative; }
+  .grid-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 12px 32px rgba(232,64,42,0.22); }
+  .card-thumb { width: 100%; aspect-ratio: 2/3; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; position: relative; overflow: hidden; }
+  .card-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+  .grid-card:hover .card-thumb img { transform: scale(1.05); }
+  .card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%); opacity: 0; transition: opacity 0.25s; display: flex; flex-direction: column; justify-content: flex-end; padding: 0.75rem; }
+  .grid-card:hover .card-overlay { opacity: 1; }
+  .card-overlay-actions { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+  .card-overlay-btn { flex: 1; padding: 0.35rem; background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 6px; cursor: pointer; font-size: 0.65rem; font-family: inherit; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; transition: all 0.15s; text-align: center; }
+  .card-overlay-btn:hover { background: rgba(255,255,255,0.25); }
+  .card-overlay-btn.danger:hover { background: rgba(232,64,64,0.4); border-color: var(--dropped); }
+  .card-score-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); border-radius: 6px; padding: 2px 8px; font-family: 'Bebas Neue', cursive; font-size: 1rem; color: var(--gold); border: 1px solid rgba(245,200,66,0.3); }
+  .card-status-bar { height: 3px; width: 100%; }
+  .card-info { padding: 0.75rem 0.7rem; }
+  .card-info .title { font-size: 0.78rem; font-weight: 700; line-height: 1.3; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-info .ep { font-size: 0.68rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(24px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 520px; overflow: hidden; animation: slideUp 0.25s ease; box-shadow: 0 24px 64px rgba(0,0,0,0.6); }
+  .modal-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; background: linear-gradient(135deg, rgba(232,64,42,0.05) 0%, transparent 60%); }
+  .modal-header h2 { font-family: 'Bebas Neue', cursive; font-size: 1.4rem; letter-spacing: 2px; color: var(--text); flex: 1; }
+  .modal-close { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .modal-close:hover { color: var(--text); border-color: var(--muted); }
+  .modal-body { padding: 1.5rem; max-height: 70vh; overflow-y: auto; }
+  .modal-body::-webkit-scrollbar { width: 4px; }
+  .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .form-group { margin-bottom: 1.2rem; }
+  .form-label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 0.4rem; font-weight: 600; }
+  .form-input, .form-select, .form-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.88rem; padding: 0.6rem 0.9rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  .form-textarea { resize: vertical; min-height: 72px; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,64,42,0.1); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .ai-suggest-row { display: flex; gap: 0.5rem; }
+  .ai-suggest-row .form-input { flex: 1; }
+  .btn-ai { background: linear-gradient(135deg, #9c6fde, #e8402a); border: none; color: white; border-radius: 8px; padding: 0.6rem 1rem; cursor: pointer; font-family: inherit; font-size: 0.75rem; font-weight: 700; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.3px; transition: all 0.2s; display: flex; align-items: center; gap: 0.4rem; }
+  .btn-ai:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(156,111,222,0.35); }
+  .btn-ai:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .ai-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ai-suggestions { margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .ai-suggestion-chip { background: var(--surface3); border: 1px solid var(--border); color: var(--text); border-radius: 20px; padding: 0.3rem 0.8rem; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
+  .ai-suggestion-chip:hover { border-color: var(--accent); color: var(--accent); background: rgba(232,64,42,0.08); }
+  .score-picker { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .score-option { width: 38px; height: 38px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+  .score-option:hover { background: var(--surface3); color: var(--text); border-color: var(--muted); }
+  .score-option.selected { background: var(--accent); border-color: var(--accent); color: white; transform: scale(1.1); box-shadow: 0 4px 12px rgba(232,64,42,0.35); }
+  .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center; }
+  .modal-footer-left { margin-right: auto; }
+  .btn-cancel { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 0.5rem 1.2rem; font-family: inherit; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .btn-cancel:hover { color: var(--text); border-color: var(--muted); }
+  .btn-save { background: var(--accent); border: none; color: white; border-radius: 8px; padding: 0.5rem 1.5rem; font-family: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+  .btn-save:hover { background: var(--accent2); box-shadow: 0 4px 12px rgba(232,64,42,0.4); }
+
+  /* CONFIRM DIALOG */
+  .confirm-dialog { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 380px; padding: 2rem; animation: slideUp 0.2s ease; box-shadow: 0 24px 64px rgba(0,0,0,0.6); text-align: center; }
+  .confirm-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .confirm-title { font-family: 'Bebas Neue', cursive; font-size: 1.3rem; letter-spacing: 2px; margin-bottom: 0.5rem; }
+  .confirm-msg { color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 1.5rem; }
+  .confirm-btns { display: flex; gap: 0.75rem; justify-content: center; }
+  .btn-confirm-cancel { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 0.5rem 1.4rem; font-family: inherit; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; font-weight: 600; }
+  .btn-confirm-cancel:hover { color: var(--text); border-color: var(--muted); }
+  .btn-confirm-delete { background: var(--dropped); border: none; color: white; border-radius: 8px; padding: 0.5rem 1.4rem; font-family: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-confirm-delete:hover { opacity: 0.85; box-shadow: 0 4px 12px rgba(232,64,64,0.4); }
+
+  /* EMPTY */
+  .empty-state { text-align: center; padding: 5rem 2rem; color: var(--muted); }
+  .empty-state .icon { font-size: 3.5rem; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-state h3 { font-family: 'Bebas Neue', cursive; font-size: 1.4rem; letter-spacing: 2px; color: var(--text); margin-bottom: 0.5rem; }
+  .empty-state p { font-size: 0.85rem; }
+
+  /* TOAST */
+  .toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 300; display: flex; flex-direction: column; gap: 0.75rem; }
+  .toast { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1.2rem; font-size: 0.85rem; color: var(--text); display: flex; align-items: center; gap: 0.6rem; min-width: 240px; animation: toastIn 0.3s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  .toast-success { border-left: 3px solid var(--completed); }
+  .toast-error { border-left: 3px solid var(--dropped); }
+  .toast-info { border-left: 3px solid var(--watching); }
+  .hidden { display: none !important; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">ANI<span>TRACK</span></div>
+  <ul class="nav-links">
+    <li><a href="#" class="active">My List</a></li>
+    <li><a href="#">Discover</a></li>
+    <li><a href="#">Seasonal</a></li>
+    <li><a href="#">Forums</a></li>
+  </ul>
+  <div class="nav-right">
+    <input class="search-bar" type="text" id="searchInput" placeholder="Search… (Ctrl+K)" oninput="render()">
+    <button class="nav-icon-btn" onclick="exportList()" title="Export backup JSON">⬇</button>
+    <label class="nav-icon-btn" title="Import JSON backup" style="cursor:pointer">
+      ⬆<input type="file" accept=".json" onchange="importList(event)" style="display:none">
+    </label>
+    <button class="btn-add" onclick="openModal()">＋ Add Anime</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+  <div class="hero-content">
+    <h1>YOUR <em>ANIME</em><br>UNIVERSE</h1>
+    <p>Track · Rate · Discover · Share</p>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="main-layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Filter by Status</div>
+      <button class="filter-btn active" onclick="setFilter('all', this)">
+        <span class="filter-status-dot" style="background:#6b6b8a"></span>All Anime
+        <span class="filter-count" id="count-all">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('Watching', this)">
+        <span class="filter-status-dot" style="background:var(--watching)"></span>Watching
+        <span class="filter-count" id="count-Watching">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('Completed', this)">
+        <span class="filter-status-dot" style="background:var(--completed)"></span>Completed
+        <span class="filter-count" id="count-Completed">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('Plan to Watch', this)">
+        <span class="filter-status-dot" style="background:var(--plan)"></span>Plan to Watch
+        <span class="filter-count" id="count-Plan to Watch">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('On Hold', this)">
+        <span class="filter-status-dot" style="background:var(--onhold)"></span>On Hold
+        <span class="filter-count" id="count-On Hold">0</span>
+      </button>
+      <button class="filter-btn" onclick="setFilter('Dropped', this)">
+        <span class="filter-status-dot" style="background:var(--dropped)"></span>Dropped
+        <span class="filter-count" id="count-Dropped">0</span>
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Filter by Genre</div>
+      <button class="filter-btn" onclick="setGenreFilter('Action', this)">⚔️ Action</button>
+      <button class="filter-btn" onclick="setGenreFilter('Romance', this)">💕 Romance</button>
+      <button class="filter-btn" onclick="setGenreFilter('Fantasy', this)">🔮 Fantasy</button>
+      <button class="filter-btn" onclick="setGenreFilter('Sci-Fi', this)">🚀 Sci-Fi</button>
+      <button class="filter-btn" onclick="setGenreFilter('Isekai', this)">🌀 Isekai</button>
+      <button class="filter-btn" onclick="setGenreFilter('Slice of Life', this)">🌸 Slice of Life</button>
+      <button class="filter-btn" onclick="setGenreFilter('Horror', this)">👻 Horror</button>
+      <button class="filter-btn" onclick="setGenreFilter('Sports', this)">🏆 Sports</button>
+      <button class="filter-btn" onclick="setGenreFilter('Mecha', this)">🤖 Mecha</button>
+      <button class="filter-btn" onclick="setGenreFilter('Mystery', this)">🔍 Mystery</button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="content-header">
+      <div class="content-title" id="contentTitle">All Anime</div>
+      <select class="sort-select" onchange="sortList(this.value)">
+        <option value="title">Sort: Title</option>
+        <option value="score">Sort: Score</option>
+        <option value="progress">Sort: Progress</option>
+        <option value="recent">Sort: Recently Added</option>
+      </select>
+      <div class="view-toggle">
+        <button class="view-btn active" id="viewTable" onclick="setView('table')" title="Table view">☰</button>
+        <button class="view-btn" id="viewGrid" onclick="setView('grid')" title="Grid view">⊞</button>
+      </div>
+    </div>
+    <div id="listContainer"></div>
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Add Anime</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <div class="ai-suggest-row">
+          <input class="form-input" type="text" id="inputTitle" placeholder="e.g. Attack on Titan" oninput="clearSuggestions()">
+          <button class="btn-ai" id="aiBtnSuggest" onclick="aiSuggestTitles()">
+            <span id="aiSpinnerSpan" class="hidden"><span class="ai-spinner"></span></span>
+            <span id="aiLabelSpan">✦ AI Suggest</span>
+          </button>
+        </div>
+        <div class="ai-suggestions" id="aiSuggestions"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Status *</label>
+          <select class="form-select" id="inputStatus">
+            <option value="Watching">Watching</option>
+            <option value="Completed">Completed</option>
+            <option value="Plan to Watch">Plan to Watch</option>
+            <option value="On Hold">On Hold</option>
+            <option value="Dropped">Dropped</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Genre</label>
+          <select class="form-select" id="inputGenre">
+            <option value="Action">Action</option>
+            <option value="Romance">Romance</option>
+            <option value="Fantasy">Fantasy</option>
+            <option value="Sci-Fi">Sci-Fi</option>
+            <option value="Isekai">Isekai</option>
+            <option value="Slice of Life">Slice of Life</option>
+            <option value="Horror">Horror</option>
+            <option value="Sports">Sports</option>
+            <option value="Mecha">Mecha</option>
+            <option value="Mystery">Mystery</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Episodes Watched</label>
+          <input class="form-input" type="number" id="inputEpWatched" min="0" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Total Episodes</label>
+          <input class="form-input" type="number" id="inputEpTotal" min="0" placeholder="12">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your Score</label>
+        <div class="score-picker" id="scorePicker"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <textarea class="form-textarea" id="inputNotes" placeholder="Where you left off, your thoughts…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Emoji / Cover URL</label>
+        <input class="form-input" type="text" id="inputEmoji" placeholder="🎌 or https://image.jpg" maxlength="300">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-footer-left" id="deleteFromModal" style="display:none">
+        <button class="btn-cancel" style="color:var(--dropped);border-color:rgba(232,64,64,0.3)" onclick="deleteFromEditModal()">🗑 Remove</button>
+      </div>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveAnime()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="modal-overlay hidden" id="confirmOverlay">
+  <div class="confirm-dialog">
+    <div class="confirm-icon">🗑</div>
+    <div class="confirm-title">Remove Anime?</div>
+    <div class="confirm-msg" id="confirmMsg">Are you sure?</div>
+    <div class="confirm-btns">
+      <button class="btn-confirm-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-confirm-delete" onclick="confirmDeleteFn()">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const GENRES_EMOJI = { Action:'⚔️', Romance:'💕', Fantasy:'🔮', 'Sci-Fi':'🚀', Isekai:'🌀', 'Slice of Life':'🌸', Horror:'👻', Sports:'🏆', Mecha:'🤖', Mystery:'🔍', Other:'🎌' };
+
+let animeList = JSON.parse(localStorage.getItem('anitrack_v2_list') || 'null') || [
+  { id:1, title:"Attack on Titan", status:"Completed", genre:"Action", epWatched:87, epTotal:87, score:10, cover:"⚔️", added:Date.now()-5e8, notes:"Peak storytelling. Final season was incredible." },
+  { id:2, title:"Fullmetal Alchemist: Brotherhood", status:"Completed", genre:"Action", epWatched:64, epTotal:64, score:10, cover:"🔥", added:Date.now()-4e8, notes:"" },
+  { id:3, title:"Steins;Gate", status:"Completed", genre:"Sci-Fi", epWatched:24, epTotal:24, score:10, cover:"⏳", added:Date.now()-3.5e8, notes:"El Psy Kongroo" },
+  { id:4, title:"Demon Slayer", status:"Watching", genre:"Action", epWatched:26, epTotal:44, score:8, cover:"🗡️", added:Date.now()-3e8, notes:"Left off at Entertainment District arc" },
+  { id:5, title:"Your Name", status:"Completed", genre:"Romance", epWatched:1, epTotal:1, score:9, cover:"🌌", added:Date.now()-2.5e8, notes:"" },
+  { id:6, title:"Re:Zero", status:"On Hold", genre:"Fantasy", epWatched:25, epTotal:50, score:7, cover:"🔁", added:Date.now()-2e8, notes:"Need to continue from ep 25" },
+  { id:7, title:"Neon Genesis Evangelion", status:"Completed", genre:"Mecha", epWatched:26, epTotal:26, score:9, cover:"🤖", added:Date.now()-1.5e8, notes:"" },
+  { id:8, title:"One Punch Man", status:"Watching", genre:"Action", epWatched:12, epTotal:24, score:8, cover:"👊", added:Date.now()-1e8, notes:"" },
+  { id:9, title:"Violet Evergarden", status:"Plan to Watch", genre:"Romance", epWatched:0, epTotal:13, score:0, cover:"💌", added:Date.now()-5e7, notes:"" },
+  { id:10, title:"Made in Abyss", status:"Dropped", genre:"Fantasy", epWatched:4, epTotal:13, score:5, cover:"🕳️", added:Date.now()-2e7, notes:"Too dark for my taste right now" },
+];
+
+let currentFilter = 'all', currentGenreFilter = null, currentView = 'table', currentSort = 'title', selectedScore = 0;
+let nextId = Math.max(...animeList.map(a => a.id), 0) + 1;
+let pendingDeleteId = null;
+
+function save() { localStorage.setItem('anitrack_v2_list', JSON.stringify(animeList)); }
+
+// FILTERING
+function getFiltered() {
+  let list = [...animeList];
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  if (q) list = list.filter(a => a.title.toLowerCase().includes(q) || (a.notes||'').toLowerCase().includes(q));
+  if (currentFilter !== 'all') list = list.filter(a => a.status === currentFilter);
+  if (currentGenreFilter) list = list.filter(a => a.genre === currentGenreFilter);
+  switch(currentSort) {
+    case 'score': list.sort((a,b) => b.score - a.score || a.title.localeCompare(b.title)); break;
+    case 'progress': list.sort((a,b) => (b.epWatched/Math.max(b.epTotal,1)) - (a.epWatched/Math.max(a.epTotal,1))); break;
+    case 'recent': list.sort((a,b) => b.added - a.added); break;
+    default: list.sort((a,b) => a.title.localeCompare(b.title));
+  }
+  return list;
+}
+
+function setFilter(f, el) {
+  currentFilter = f; currentGenreFilter = null;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('contentTitle').textContent = f === 'all' ? 'All Anime' : f;
+  render();
+}
+
+function setGenreFilter(g, el) {
+  if (currentGenreFilter === g) {
+    currentGenreFilter = null; el.classList.remove('active');
+    document.getElementById('contentTitle').textContent = currentFilter === 'all' ? 'All Anime' : currentFilter;
+  } else {
+    currentGenreFilter = g;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('contentTitle').textContent = 'Genre: ' + g;
+  }
+  render();
+}
+
+function sortList(v) { currentSort = v; render(); }
+function setView(v) {
+  currentView = v;
+  document.getElementById('viewTable').classList.toggle('active', v === 'table');
+  document.getElementById('viewGrid').classList.toggle('active', v === 'grid');
+  render();
+}
+
+// STATS
+function renderStats() {
+  const total = animeList.length;
+  const counts = { Watching:0, Completed:0, 'Plan to Watch':0, 'On Hold':0, Dropped:0 };
+  let totalEp = 0, scored = 0, scoreSum = 0;
+  animeList.forEach(a => {
+    if (counts[a.status] !== undefined) counts[a.status]++;
+    totalEp += a.epWatched;
+    if (a.score) { scored++; scoreSum += a.score; }
+  });
+  const avgScore = scored ? (scoreSum/scored).toFixed(1) : '—';
+  const hours = Math.round(totalEp * 23.5 / 60);
+  const colors = { Watching:'var(--watching)', Completed:'var(--completed)', 'Plan to Watch':'var(--plan)', 'On Hold':'var(--onhold)', Dropped:'var(--dropped)' };
+
+  document.getElementById('count-all').textContent = total;
+  Object.entries(counts).forEach(([k,v]) => { const el = document.getElementById('count-'+k); if(el) el.textContent = v; });
+
+  const segs = total > 0 ? Object.entries(counts).map(([k,v]) =>
+    `<div class="stats-progress-seg" style="width:${(v/total*100).toFixed(1)}%;background:${colors[k]}" title="${k}: ${v}"></div>`
+  ).join('') : '';
+
+  document.getElementById('statsBar').innerHTML = `
+    ${Object.entries(counts).map(([k,v]) => `
+      <div class="stat-item">
+        <div class="stat-dot" style="background:${colors[k]}"></div>
+        <div><div class="stat-label">${k}</div><div class="stat-count">${v}</div></div>
+      </div>
+    `).join('<div class="stat-divider"></div>')}
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-dot" style="background:var(--gold)"></div><div><div class="stat-label">Avg Score</div><div class="stat-count">${avgScore}</div></div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-dot" style="background:var(--accent)"></div><div><div class="stat-label">Episodes</div><div class="stat-count">${totalEp}</div></div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-dot" style="background:var(--plan)"></div><div><div class="stat-label">Est. Hours</div><div class="stat-count">~${hours}h</div></div></div>
+    <div class="stat-divider"></div>
+    <div class="stats-progress-track">${segs}</div>
+  `;
+}
+
+// RENDER HELPERS
+function statusClass(s) { return {Watching:'status-watching',Completed:'status-completed','Plan to Watch':'status-plan','On Hold':'status-onhold',Dropped:'status-dropped'}[s]||''; }
+function statusColor(s) { return {Watching:'var(--watching)',Completed:'var(--completed)','Plan to Watch':'var(--plan)','On Hold':'var(--onhold)',Dropped:'var(--dropped)'}[s]||'var(--muted)'; }
+function scoreClass(n) { if(!n) return 'score-none'; if(n===10) return 'score-10'; if(n>=7) return 'score-high'; if(n>=5) return 'score-mid'; return 'score-low'; }
+function progressPct(a) { return a.epTotal ? Math.round(a.epWatched/a.epTotal*100) : 0; }
+function isUrl(s) { return s && (s.startsWith('http') || s.startsWith('/')); }
+function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function thumbHtml(a) {
+  if (isUrl(a.cover)) return `<img src="${escHtml(a.cover)}" onerror="this.parentNode.textContent='🎌'">`;
+  return a.cover || '🎌';
+}
+
+function renderTable(list) {
+  if (!list.length) return emptyState();
+  return `<table class="anime-table">
+    <thead><tr>
+      <th style="width:38%">Title</th><th>Status</th><th>Progress</th>
+      <th class="sortable ${currentSort==='score'?'sort-active':''}" onclick="sortList('score')">Score ${currentSort==='score'?'▾':'↕'}</th>
+      <th>Actions</th>
+    </tr></thead>
+    <tbody>${list.map((a,i) => `
+      <tr class="anime-row" style="animation-delay:${i*0.035}s">
+        <td><div class="thumb-cell">
+          <div class="anime-thumb">${thumbHtml(a)}</div>
+          <div class="anime-info">
+            <div class="title" onclick="openEdit(${a.id})">${escHtml(a.title)}</div>
+            ${a.notes ? `<div class="notes-preview">${escHtml(a.notes)}</div>` : ''}
+            <div class="meta"><span class="meta-tag">${escHtml(a.genre)}</span>${a.epTotal ? `${a.epWatched}/${a.epTotal} eps` : '—'}</div>
+          </div>
+        </div></td>
+        <td><div class="status-badge ${statusClass(a.status)}">${a.status}</div></td>
+        <td class="progress-cell">
+          <div class="progress-bar"><div class="progress-fill" style="width:${progressPct(a)}%;background:${statusColor(a.status)}"></div></div>
+          <div class="progress-text">${progressPct(a)}%</div>
+        </td>
+        <td class="score-cell"><span class="${scoreClass(a.score)}">${a.score || '—'}</span></td>
+        <td><div class="action-btns">
+          ${a.status==='Watching' && a.epTotal && a.epWatched < a.epTotal ? `<button class="action-btn ep-plus" onclick="quickEpPlus(${a.id})" title="+1 Episode">+1</button>` : ''}
+          <button class="action-btn edit" onclick="openEdit(${a.id})" title="Edit">✏️</button>
+          <button class="action-btn del" onclick="askDelete(${a.id})" title="Delete">🗑</button>
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function renderGrid(list) {
+  if (!list.length) return emptyState();
+  return `<div class="anime-grid">${list.map((a,i) => `
+    <div class="grid-card" style="animation-delay:${i*0.035}s">
+      <div class="card-thumb">
+        ${isUrl(a.cover) ? `<img src="${escHtml(a.cover)}" onerror="this.style.display='none'">` : ''}
+        <span style="${isUrl(a.cover)?'display:none':''}font-size:2.5rem;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">${isUrl(a.cover)?'🎌':(a.cover||'🎌')}</span>
+        ${a.score ? `<div class="card-score-badge">${a.score}</div>` : ''}
+        <div class="card-overlay">
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.85);font-family:'Space Mono',monospace">${a.epTotal?`${a.epWatched}/${a.epTotal} eps`:a.status}</div>
+          <div class="card-overlay-actions">
+            <button class="card-overlay-btn" onclick="event.stopPropagation();openEdit(${a.id})">✏ Edit</button>
+            <button class="card-overlay-btn danger" onclick="event.stopPropagation();askDelete(${a.id})">🗑</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-status-bar" style="background:${statusColor(a.status)}"></div>
+      <div class="card-info">
+        <div class="title" onclick="openEdit(${a.id})">${escHtml(a.title)}</div>
+        <div class="ep">${a.epTotal ? `${a.epWatched}/${a.epTotal} eps` : a.status}</div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function emptyState() {
+  return `<div class="empty-state"><div class="icon">🌸</div><h3>No Anime Found</h3><p>Try adding something or changing the filter</p></div>`;
+}
+
+function render() {
+  const list = getFiltered();
+  document.getElementById('listContainer').innerHTML = currentView === 'grid' ? renderGrid(list) : renderTable(list);
+  renderStats();
+}
+
+// QUICK +1 EP
+function quickEpPlus(id) {
+  const a = animeList.find(x => x.id === id);
+  if (!a) return;
+  a.epWatched = Math.min(a.epWatched + 1, a.epTotal);
+  if (a.epWatched === a.epTotal) {
+    a.status = 'Completed';
+    showToast(`🎉 Completed "${a.title}"!`, 'success');
+  } else {
+    showToast(`+1 ep → ${a.epWatched}/${a.epTotal} for "${a.title}"`, 'info');
+  }
+  save(); render();
+}
+
+// MODAL
+function buildScorePicker(selected = 0) {
+  selectedScore = selected;
+  document.getElementById('scorePicker').innerHTML = [0,1,2,3,4,5,6,7,8,9,10].map(n =>
+    `<button class="score-option ${selectedScore===n?'selected':''}" onclick="pickScore(${n})">${n||'—'}</button>`
+  ).join('');
+}
+function pickScore(n) { selectedScore = n; buildScorePicker(n); }
+
+function openModal() {
+  document.getElementById('editId').value = '';
+  document.getElementById('inputTitle').value = '';
+  document.getElementById('inputStatus').value = 'Watching';
+  document.getElementById('inputGenre').value = 'Action';
+  document.getElementById('inputEpWatched').value = '';
+  document.getElementById('inputEpTotal').value = '';
+  document.getElementById('inputNotes').value = '';
+  document.getElementById('inputEmoji').value = '';
+  document.getElementById('modalTitle').textContent = 'Add Anime';
+  document.getElementById('deleteFromModal').style.display = 'none';
+  clearSuggestions();
+  buildScorePicker(0);
+  document.getElementById('modalOverlay').classList.remove('hidden');
+  setTimeout(() => document.getElementById('inputTitle').focus(), 100);
+}
+
+function openEdit(id) {
+  const a = animeList.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('editId').value = a.id;
+  document.getElementById('inputTitle').value = a.title;
+  document.getElementById('inputStatus').value = a.status;
+  document.getElementById('inputGenre').value = a.genre;
+  document.getElementById('inputEpWatched').value = a.epWatched;
+  document.getElementById('inputEpTotal').value = a.epTotal;
+  document.getElementById('inputNotes').value = a.notes || '';
+  document.getElementById('inputEmoji').value = a.cover || '';
+  document.getElementById('modalTitle').textContent = 'Edit Entry';
+  document.getElementById('deleteFromModal').style.display = 'block';
+  clearSuggestions();
+  buildScorePicker(a.score);
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+
+function deleteFromEditModal() {
+  const id = parseInt(document.getElementById('editId').value);
+  if (!id) return;
+  closeModal();
+  askDelete(id);
+}
+
+function saveAnime() {
+  const title = document.getElementById('inputTitle').value.trim();
+  if (!title) { showToast('Please enter a title', 'error'); return; }
+  const data = {
+    title, status: document.getElementById('inputStatus').value,
+    genre: document.getElementById('inputGenre').value,
+    epWatched: parseInt(document.getElementById('inputEpWatched').value) || 0,
+    epTotal: parseInt(document.getElementById('inputEpTotal').value) || 0,
+    score: selectedScore,
+    notes: document.getElementById('inputNotes').value.trim(),
+    cover: document.getElementById('inputEmoji').value || (GENRES_EMOJI[document.getElementById('inputGenre').value] || '🎌'),
+  };
+  const editId = parseInt(document.getElementById('editId').value);
+  if (editId) {
+    const idx = animeList.findIndex(a => a.id === editId);
+    animeList[idx] = { ...animeList[idx], ...data };
+    showToast(`Updated "${title}"`, 'success');
+  } else {
+    data.id = nextId++; data.added = Date.now();
+    animeList.push(data);
+    showToast(`Added "${title}" to your list!`, 'success');
+  }
+  save(); closeModal(); render();
+}
+
+// CONFIRM DELETE
+function askDelete(id) {
+  const a = animeList.find(x => x.id === id);
+  if (!a) return;
+  pendingDeleteId = id;
+  document.getElementById('confirmMsg').textContent = `Remove "${a.title}" from your list?`;
+  document.getElementById('confirmOverlay').classList.remove('hidden');
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.add('hidden'); pendingDeleteId = null; }
+function confirmDeleteFn() {
+  if (!pendingDeleteId) return;
+  const a = animeList.find(x => x.id === pendingDeleteId);
+  animeList = animeList.filter(x => x.id !== pendingDeleteId);
+  save(); closeConfirm(); render();
+  showToast(`Removed "${a.title}"`, 'info');
+}
+
+// AI SUGGEST
+function clearSuggestions() { document.getElementById('aiSuggestions').innerHTML = ''; }
+
+async function aiSuggestTitles() {
+  const partial = document.getElementById('inputTitle').value.trim();
+  const genre = document.getElementById('inputGenre').value;
+  const btn = document.getElementById('aiBtnSuggest');
+  btn.disabled = true;
+  document.getElementById('aiSpinnerSpan').classList.remove('hidden');
+  document.getElementById('aiLabelSpan').textContent = 'Thinking…';
+  clearSuggestions();
+  try {
+    const prompt = partial
+      ? `Suggest 6 real anime titles similar to or matching "${partial}" (genre: ${genre}). Return ONLY a JSON array of title strings with no other text.`
+      : `Suggest 6 popular and well-regarded anime in the "${genre}" genre. Return ONLY a JSON array of title strings with no other text.`;
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 300, messages: [{ role: "user", content: prompt }] })
+    });
+    const data = await response.json();
+    const text = (data.content||[]).map(c => c.text||'').join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const titles = JSON.parse(clean);
+    const container = document.getElementById('aiSuggestions');
+    container.innerHTML = titles.map(t => `<button class="ai-suggestion-chip" onclick="pickSuggestion(this.textContent)">${escHtml(t)}</button>`).join('');
+  } catch(e) {
+    showToast('AI suggest failed. Try again.', 'error');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('aiSpinnerSpan').classList.add('hidden');
+    document.getElementById('aiLabelSpan').textContent = '✦ AI Suggest';
+  }
+}
+
+function pickSuggestion(title) { document.getElementById('inputTitle').value = title; clearSuggestions(); }
+
+// IMPORT / EXPORT
+function exportList() {
+  const blob = new Blob([JSON.stringify(animeList, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'anitrack_backup.json';
+  a.click();
+  showToast('List exported!', 'success');
+}
+
+function importList(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error();
+      animeList = data;
+      nextId = Math.max(...animeList.map(a => a.id), 0) + 1;
+      save(); render();
+      showToast(`Imported ${data.length} entries!`, 'success');
+    } catch { showToast('Invalid JSON file', 'error'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// TOAST
+function showToast(msg, type='info') {
+  const icons = { success:'✅', error:'❌', info:'ℹ️' };
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `<span>${icons[type]}</span><span>${escHtml(msg)}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.transition='opacity 0.3s'; toast.style.opacity='0'; setTimeout(()=>toast.remove(),300); }, 2800);
+}
+
+// KEYBOARD
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeConfirm(); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+});
+document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+document.getElementById('confirmOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeConfirm(); });
+
+render();
+</script>
+</body>
+</html>
